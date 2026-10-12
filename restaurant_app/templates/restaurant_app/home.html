@@ -1,0 +1,509 @@
+```html
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Restaurant | Food Ordering</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <style>
+        :root {
+            --green: #198754;
+            --dark: #173c2b;
+            --cream: #fffaf1;
+        }
+
+        body {
+            background: var(--cream);
+            font-family: Arial, sans-serif;
+            color: #26332b;
+        }
+
+        .navbar {
+            background: var(--dark);
+        }
+
+        .navbar-brand {
+            color: white;
+            font-size: 25px;
+            font-weight: bold;
+        }
+
+        .hero {
+            background: linear-gradient(120deg, #173c2b, #248653);
+            color: white;
+            padding: 55px 20px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 800;
+        }
+
+        .section-title {
+            color: var(--dark);
+            font-weight: 800;
+        }
+
+        .food-card {
+            height: 100%;
+            background: white;
+            border: 0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px #0000000d;
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .food-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 9px 24px #00000016;
+        }
+
+        .food-image {
+            width: 100%;
+            height: 190px;
+            object-fit: cover;
+            background: #e8eee8;
+        }
+
+        .food-emoji {
+            height: 190px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 75px;
+            background: #edf5eb;
+        }
+
+        .food-name {
+            color: var(--dark);
+            font-weight: 750;
+        }
+
+        .food-price {
+            color: var(--green);
+            font-size: 21px;
+            font-weight: 800;
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: white;
+            border: none;
+            border-radius: 9px;
+            font-weight: 700;
+        }
+
+        .btn-green:hover {
+            background: #146c43;
+            color: white;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 18px #0000000d;
+        }
+
+        .cart-row {
+            border-bottom: 1px solid #e8ece8;
+            padding: 14px 0;
+        }
+
+        .quantity-btn {
+            border: 1px solid #d7e2d9;
+            background: #f4f8f4;
+            width: 32px;
+            height: 32px;
+            border-radius: 7px;
+            font-weight: bold;
+        }
+
+        .quantity-btn:hover {
+            background: #dcefe1;
+        }
+
+        .cart-total {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .form-control, .form-select {
+            border-radius: 9px;
+            padding: 11px;
+        }
+
+        footer {
+            background: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 24px 10px;
+            margin-top: 45px;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'home' %}">🍽️ Smart Restaurant</a>
+        <span class="text-white">🛒 Cart: <b id="navCartCount">0</b></span>
+    </div>
+</nav>
+
+<section class="hero">
+    <div class="container">
+        <h1>Fresh Food. Great Taste. Happy Moments.</h1>
+        <p class="lead mt-3">
+            Order your favourites with just a click!
+        </p>
+        <a href="#menu" class="btn btn-light btn-lg mt-2">
+            Explore Menu
+        </a>
+    </div>
+</section>
+
+<main class="container my-5">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <section id="menu" class="mb-5">
+        <div class="text-center mb-4">
+            <h2 class="section-title">Our Menu 🍴</h2>
+            <p class="text-muted">Choose your favourite food!</p>
+        </div>
+
+        <div class="row g-4">
+            {% for item in items %}
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <div class="food-card">
+
+                        {% if item.image_url %}
+                            <img src="{{ item.image_url }}"
+                                 class="food-image"
+                                 alt="{{ item.name }}"
+                                 loading="lazy">
+                        {% else %}
+                            {% if "burger" in item.name|lower %}
+                                <img src="{% static 'images/burger.jpg' %}"
+                                     class="food-image" alt="{{ item.name }}"
+                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🍔</div>'">
+                            {% elif "pizza" in item.name|lower %}
+                                <img src="{% static 'images/pizza.jpg' %}"
+                                     class="food-image" alt="{{ item.name }}"
+                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🍕</div>'">
+                            {% elif "biryani" in item.name|lower %}
+                                <img src="{% static 'images/biryani.jpg' %}"
+                                     class="food-image" alt="{{ item.name }}"
+                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🍛</div>'">
+                            {% elif "brownie" in item.name|lower %}
+                                <img src="{% static 'images/chocolate_brownie.jpg' %}"
+                                     class="food-image" alt="{{ item.name }}"
+                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🍫</div>'">
+                            {% elif "spring" in item.name|lower %}
+                                <img src="{% static 'images/veg_springrolls.jpg' %}"
+                                     class="food-image" alt="{{ item.name }}"
+                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🥟</div>'">
+                            {% elif "paneer" in item.name|lower %}
+                                <img src="{% static 'images/paneer.jpg' %}"
+                                     class="food-image" alt="{{ item.name }}"
+                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🍲</div>'">
+                            {% elif "chai" in item.name|lower %}
+                                <img src="{% static 'images/masala_chai.jpg' %}"
+                                     class="food-image" alt="{{ item.name }}"
+                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>☕</div>'">
+                            {% elif "lemon" in item.name|lower or "lime" in item.name|lower %}
+                                <img src="{% static 'images/lime_drink.jpg' %}"
+                                     class="food-image" alt="{{ item.name }}"
+                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🥤</div>'">
+                            {% else %}
+                                <div class="food-emoji">🍽️</div>
+                            {% endif %}
+                        {% endif %}
+
+                        <div class="p-3">
+                            <div class="small text-muted mb-2">
+                                {{ item.category.name }}
+                                ·
+                                {% if item.is_vegetarian %}
+                                    🟢 Veg
+                                {% else %}
+                                    🔴 Non-Veg
+                                {% endif %}
+                            </div>
+
+                            <h5 class="food-name">{{ item.name }}</h5>
+                            <p class="text-muted small">
+                                {{ item.description|default:"Freshly prepared and delicious." }}
+                            </p>
+
+                            <div class="d-flex justify-content-between
+                                        align-items-center gap-2 mt-3">
+                                <span class="food-price">
+                                    ₹{{ item.price|floatformat:2 }}
+                                </span>
+
+                                <button type="button"
+                                        class="btn btn-green"
+                                        onclick="addToCart(
+                                            {{ item.id }},
+                                            '{{ item.name|escapejs }}',
+                                            {{ item.price }}
+                                        )">
+                                    + Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12 text-center">
+                    <div class="alert alert-warning">
+                        No menu items available. Please add items in Django Admin.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section id="cart" class="row g-4">
+
+        <div class="col-12 col-lg-7">
+            <div class="panel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="section-title mb-0">🛒 Your Cart</h3>
+                    <button type="button" class="btn btn-outline-danger btn-sm"
+                            onclick="clearCart()">Clear Cart</button>
+                </div>
+
+                <div id="cartItems">
+                    <p class="text-muted">Your cart is empty. Add food from the menu.</p>
+                </div>
+
+                <div class="border-top pt-3 mt-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <span id="subtotal">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tax (5%)</span>
+                        <span id="tax">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between cart-total">
+                        <span>Grand Total</span>
+                        <span id="grandTotal">₹0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-5">
+            <div class="panel">
+                <h3 class="section-title mb-3">👤 Customer Details</h3>
+
+                <form method="POST" action="{% url 'place_order' %}" id="orderForm">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="customer_name" class="form-label">Full Name *</label>
+                        <input type="text" class="form-control"
+                               id="customer_name" name="customer_name"
+                               placeholder="Enter your name" maxlength="100" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="customer_phone" class="form-label">Phone Number *</label>
+                        <input type="tel" class="form-control"
+                               id="customer_phone" name="customer_phone"
+                               placeholder="Enter phone number"
+                               pattern="[0-9+\-\s]{10,15}"
+                               title="Enter a valid phone number"
+                               maxlength="15" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="table_number" class="form-label">Table Number</label>
+                        <input type="text" class="form-control"
+                               id="table_number" name="table_number"
+                               placeholder="Optional" maxlength="20">
+                    </div>
+
+                    <input type="hidden" name="cart" id="cartData">
+
+                    <button type="submit" class="btn btn-green btn-lg w-100"
+                            id="placeOrderButton">
+                        Place Order
+                    </button>
+
+                    <p class="small text-muted mt-3 mb-0">
+                        Your order will be saved when the server accepts it.
+                    </p>
+                </form>
+            </div>
+        </div>
+
+    </section>
+</main>
+
+<footer>
+    <h5>🍽️ Smart Restaurant</h5>
+    <p class="mb-0">Food Ordering &amp; Kitchen Dashboard</p>
+    <small>Fresh food, happy moments.</small>
+</footer>
+
+<script>
+    // Use a single cart object keyed by menu item ID.
+    // This prevents the same menu item appearing twice.
+    let cart = {};
+
+    function money(amount) {
+        return "₹" + Number(amount).toFixed(2);
+    }
+
+    function addToCart(id, name, price) {
+        const key = String(id);
+
+        if (cart[key]) {
+            cart[key].quantity += 1;
+        } else {
+            cart[key] = {
+                id: Number(id),
+                name: String(name),
+                price: Number(price),
+                quantity: 1
+            };
+        }
+
+        renderCart();
+    }
+
+    function changeQuantity(id, change) {
+        const key = String(id);
+
+        if (!cart[key]) return;
+
+        cart[key].quantity += change;
+
+        if (cart[key].quantity <= 0) {
+            delete cart[key];
+        }
+
+        renderCart();
+    }
+
+    function clearCart() {
+        cart = {};
+        renderCart();
+    }
+
+    function renderCart() {
+        const cartItems = document.getElementById("cartItems");
+        const entries = Object.values(cart);
+        let totalQuantity = 0;
+        let subtotal = 0;
+
+        if (entries.length === 0) {
+            cartItems.innerHTML =
+                '<p class="text-muted">Your cart is empty. Add food from the menu.</p>';
+        } else {
+            cartItems.innerHTML = entries.map(item => {
+                totalQuantity += item.quantity;
+                subtotal += item.price * item.quantity;
+
+                return `
+                    <div class="cart-row d-flex justify-content-between
+                                align-items-center gap-2">
+                        <div>
+                            <strong>${escapeHTML(item.name)}</strong>
+                            <div class="small text-muted">
+                                ${money(item.price)} each
+                            </div>
+                            <div class="fw-bold mt-1">
+                                ${money(item.price * item.quantity)}
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="quantity-btn"
+                                aria-label="Decrease quantity"
+                                onclick="changeQuantity(${item.id}, -1)">−</button>
+                            <span class="fw-bold">${item.quantity}</span>
+                            <button type="button" class="quantity-btn"
+                                aria-label="Increase quantity"
+                                onclick="changeQuantity(${item.id}, 1)">+</button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        const tax = Math.round(subtotal * 5) / 100;
+        const grandTotal = subtotal + tax;
+
+        document.getElementById("subtotal").textContent = money(subtotal);
+        document.getElementById("tax").textContent = money(tax);
+        document.getElementById("grandTotal").textContent = money(grandTotal);
+        document.getElementById("navCartCount").textContent = totalQuantity;
+
+        // Send only item IDs and quantities. The server checks prices.
+        document.getElementById("cartData").value = JSON.stringify(
+            entries.map(item => ({
+                id: item.id,
+                quantity: item.quantity
+            }))
+        );
+    }
+
+    function escapeHTML(value) {
+        return String(value).replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+        })[char]);
+    }
+
+    document.getElementById("orderForm").addEventListener("submit", function(event) {
+        const entries = Object.values(cart);
+
+        if (entries.length === 0) {
+            event.preventDefault();
+            alert("Please add at least one food item to your cart.");
+            return;
+        }
+
+        document.getElementById("cartData").value = JSON.stringify(
+            entries.map(item => ({
+                id: item.id,
+                quantity: item.quantity
+            }))
+        );
+
+        document.getElementById("placeOrderButton").disabled = true;
+        document.getElementById("placeOrderButton").textContent = "Placing Order...";
+    });
+
+    renderCart();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

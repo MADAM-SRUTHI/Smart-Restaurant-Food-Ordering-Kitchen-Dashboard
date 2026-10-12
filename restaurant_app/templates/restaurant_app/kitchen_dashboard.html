@@ -1,0 +1,239 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kitchen Dashboard | Smart Restaurant</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <style>
+        body {
+            background: #f4f7f5;
+            font-family: Arial, sans-serif;
+        }
+
+        .topbar {
+            background: #173c2b;
+            color: white;
+            padding: 22px 0;
+        }
+
+        .stat-card, .order-card {
+            background: white;
+            border: 0;
+            border-radius: 14px;
+            box-shadow: 0 4px 14px #0000000b;
+        }
+
+        .stat-number {
+            font-size: 30px;
+            font-weight: 800;
+            color: #198754;
+        }
+
+        .order-card {
+            margin-bottom: 22px;
+            overflow: hidden;
+        }
+
+        .order-heading {
+            background: #e9f4ec;
+            padding: 18px;
+        }
+
+        .order-body {
+            padding: 22px;
+        }
+    </style>
+</head>
+
+<body>
+<header class="topbar">
+    <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h2 class="mb-1">🍽️ Smart Restaurant</h2>
+            <p class="mb-0">Kitchen Order Management</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'home' %}" class="btn btn-light">Customer Menu</a>
+            <a href="{% url 'admin:index' %}" class="btn btn-outline-light">Admin</a>
+        </div>
+    </div>
+</header>
+
+<main class="container py-4">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-info alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="mb-4">
+        <h3 class="fw-bold">Kitchen Dashboard 👨‍🍳</h3>
+        <p class="text-muted">View incoming orders and update preparation status.</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="stat-card p-3">
+                <div class="text-muted">Total Orders</div>
+                <div class="stat-number">{{ total_orders }}</div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <div class="stat-card p-3">
+                <div class="text-muted">Pending</div>
+                <div class="stat-number">{{ pending_orders }}</div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <div class="stat-card p-3">
+                <div class="text-muted">Ready</div>
+                <div class="stat-number">{{ ready_orders }}</div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <div class="stat-card p-3">
+                <div class="text-muted">Completed</div>
+                <div class="stat-number">{{ completed_orders }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold mb-0">All Orders</h4>
+        <a href="{% url 'kitchen_dashboard' %}" class="btn btn-success">
+            ↻ Refresh
+        </a>
+    </div>
+
+    {% for order in orders %}
+        <div class="order-card">
+            <div class="order-heading d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h5 class="fw-bold mb-1">Order #{{ order.id }}</h5>
+                    <small class="text-muted">
+                        {{ order.created_at|date:"d M Y, h:i A" }}
+                    </small>
+                </div>
+
+                <span class="badge
+                    {% if order.status == 'Completed' %}bg-success
+                    {% elif order.status == 'Ready' %}bg-primary
+                    {% elif order.status == 'Preparing' %}bg-warning text-dark
+                    {% else %}bg-secondary{% endif %} fs-6">
+                    {{ order.status }}
+                </span>
+            </div>
+
+            <div class="order-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <strong>Customer</strong>
+                        <div>{{ order.customer_name }}</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <strong>Phone</strong>
+                        <div>{{ order.customer_phone }}</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <strong>Table Number</strong>
+                        <div>{{ order.table_number|default:"Takeaway / Not specified" }}</div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold mt-3">Ordered Items</h6>
+
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Food Item</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for line in order.items.all %}
+                                <tr>
+                                    <td>{{ line.menu_item.name }}</td>
+                                    <td>{{ line.quantity }}</td>
+                                    <td>₹{{ line.price|floatformat:2 }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3">No items found for this order.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <h5 class="fw-bold mb-0">
+                        Total: ₹{{ order.total_amount|floatformat:2 }}
+                    </h5>
+
+                    <form method="POST"
+                          action="{% url 'update_order_status' order.id %}"
+                          class="d-flex gap-2 flex-wrap">
+                        {% csrf_token %}
+
+                        <select name="status" class="form-select"
+                                aria-label="Order status" required>
+                            <option value="Received"
+                                {% if order.status == "Received" %}selected{% endif %}>
+                                Received
+                            </option>
+                            <option value="Preparing"
+                                {% if order.status == "Preparing" %}selected{% endif %}>
+                                Preparing
+                            </option>
+                            <option value="Ready"
+                                {% if order.status == "Ready" %}selected{% endif %}>
+                                Ready
+                            </option>
+                            <option value="Completed"
+                                {% if order.status == "Completed" %}selected{% endif %}>
+                                Completed
+                            </option>
+                        </select>
+
+                        <button type="submit" class="btn btn-success">
+                            Update Status
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    {% empty %}
+        <div class="alert alert-warning">
+            No orders received yet. Customer orders will appear here.
+        </div>
+    {% endfor %}
+
+</main>
+
+<footer class="text-center text-muted py-4">
+    Smart Restaurant · Food Ordering & Kitchen Dashboard
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+```
