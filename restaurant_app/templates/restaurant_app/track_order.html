@@ -1,0 +1,301 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Order Progress | Smart Restaurant</title>
+    <meta name="description" content="Track your food order in real-time from kitchen preparation to table delivery.">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="bg-light">
+
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg smart-navbar py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
+                <span class="brand-badge">🍽️</span>
+                <span class="brand-title">Smart Restaurant</span>
+            </a>
+            <div class="ms-auto d-flex gap-2">
+                <a href="{% url 'home' %}" class="btn btn-outline-light btn-sm rounded-pill">
+                    <i class="bi bi-card-list me-1"></i> Food Menu
+                </a>
+                <a href="{% url 'kitchen_dashboard' %}" class="btn btn-outline-warning btn-sm rounded-pill">
+                    <i class="bi bi-speedometer2 me-1"></i> Kitchen
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container my-5">
+
+        <!-- Search Order Bar -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-12 col-md-8 col-lg-6">
+                <div class="card p-3 border-0 shadow-sm rounded-4">
+                    <form method="GET" action="{% url 'track_order' %}" class="d-flex gap-2">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 rounded-start-pill"><i class="bi bi-search text-muted"></i></span>
+                            <input type="number" name="order_id" class="form-control bg-light border-start-0" placeholder="Enter your Order ID (e.g. 1)..." value="{{ query_id|default:'' }}" required min="1">
+                        </div>
+                        <button type="submit" class="btn btn-success fw-bold rounded-pill px-4">
+                            Track
+                        </button>
+                    </form>
+                </div>
+
+                {% if messages %}
+                    <div class="mt-3">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags|default:'info' }} rounded-4 small py-2 mb-0" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if order %}
+            <!-- Order Details Card -->
+            <div class="row justify-content-center">
+                <div class="col-12 col-lg-8">
+                    <div class="tracking-card">
+
+                        <!-- Header -->
+                        <div class="tracking-header">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <div>
+                                    <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold text-uppercase small mb-2 d-inline-block">
+                                        Live Kitchen Status
+                                    </span>
+                                    <h1 class="h3 fw-bold mb-0">Order #{{ order.id }}</h1>
+                                    <small class="text-white-50">Placed at {{ order.created_at|date:"d M, Y h:i A" }}</small>
+                                </div>
+                                <div class="text-lg-end">
+                                    <span class="badge {{ order.status_badge_class }} px-3 py-2 rounded-pill fs-6" id="statusBadge">
+                                        {{ order.status }}
+                                    </span>
+                                    <div class="small text-white-50 mt-1" id="livePollTimer">
+                                        <i class="bi bi-arrow-repeat spin-icon"></i> Auto-updating in <span id="countdownSec">8</span>s
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4-Step Progress Stepper -->
+                        <div class="p-4 p-md-5">
+
+                            <div class="order-stepper" id="orderStepper">
+                                <!-- Background Fill Line calculated dynamically -->
+                                <div class="stepper-progress-fill" id="stepperFill"
+                                     style="width: {% if order.status_step == 1 %}0%{% elif order.status_step == 2 %}33%{% elif order.status_step == 3 %}66%{% elif order.status_step == 4 %}100%{% endif %};">
+                                </div>
+
+                                <!-- Step 1: Received -->
+                                <div class="step-item {% if order.status_step >= 1 %}completed{% endif %} {% if order.status == 'Received' %}active{% endif %}" id="step_1">
+                                    <div class="step-circle">
+                                        <i class="bi bi-receipt"></i>
+                                    </div>
+                                    <div class="step-label">Received</div>
+                                    <div class="step-desc">Order logged in kitchen</div>
+                                </div>
+
+                                <!-- Step 2: Preparing -->
+                                <div class="step-item {% if order.status_step >= 2 %}completed{% endif %} {% if order.status == 'Preparing' %}active{% endif %}" id="step_2">
+                                    <div class="step-circle">
+                                        <i class="bi bi-fire"></i>
+                                    </div>
+                                    <div class="step-label">Preparing</div>
+                                    <div class="step-desc">Chef cooking your food</div>
+                                </div>
+
+                                <!-- Step 3: Ready -->
+                                <div class="step-item {% if order.status_step >= 3 %}completed{% endif %} {% if order.status == 'Ready' %}active{% endif %}" id="step_3">
+                                    <div class="step-circle">
+                                        <i class="bi bi-bell-fill"></i>
+                                    </div>
+                                    <div class="step-label">Ready</div>
+                                    <div class="step-desc">Ready for serving/pickup</div>
+                                </div>
+
+                                <!-- Step 4: Completed -->
+                                <div class="step-item {% if order.status_step == 4 %}completed active{% endif %}" id="step_4">
+                                    <div class="step-circle">
+                                        <i class="bi bi-check2-circle"></i>
+                                    </div>
+                                    <div class="step-label">Completed</div>
+                                    <div class="step-desc">Served &amp; Enjoyed</div>
+                                </div>
+                            </div>
+
+                            <!-- Customer & Table Summary -->
+                            <div class="row g-3 bg-light p-3 rounded-4 my-4">
+                                <div class="col-6 col-md-3">
+                                    <span class="text-muted small d-block">Customer</span>
+                                    <strong class="text-dark">{{ order.customer_name }}</strong>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <span class="text-muted small d-block">Phone</span>
+                                    <strong class="text-dark">{{ order.customer_phone }}</strong>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <span class="text-muted small d-block">Table / Pickup</span>
+                                    <strong class="text-dark">{{ order.table_number|default:"Dine-in" }}</strong>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <span class="text-muted small d-block">Elapsed Time</span>
+                                    <strong class="text-dark" id="elapsedDisplay">{{ order.elapsed_minutes }} mins ago</strong>
+                                </div>
+                            </div>
+
+                            <!-- Items Summary Table -->
+                            <h5 class="fw-bold mb-3">Items in This Order</h5>
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Dish</th>
+                                            <th>Category</th>
+                                            <th class="text-center">Quantity</th>
+                                            <th class="text-end">Price</th>
+                                            <th class="text-end">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in order.items.all %}
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        {% if item.menu_item.is_vegetarian %}
+                                                            <span title="Vegetarian">🟢</span>
+                                                        {% else %}
+                                                            <span title="Non-Vegetarian">🔴</span>
+                                                        {% endif %}
+                                                        <span class="fw-semibold">{{ item.menu_item.name }}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">
+                                                        {{ item.menu_item.category.name }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center fw-bold">{{ item.quantity }}</td>
+                                                <td class="text-end text-muted">₹{{ item.price|floatformat:2 }}</td>
+                                                <td class="text-end fw-bold">₹{{ item.subtotal|floatformat:2 }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="4" class="text-end fw-bold fs-6">Grand Total (inc. 5% GST):</td>
+                                            <td class="text-end fw-bold text-success fs-5">₹{{ order.total_amount|floatformat:2 }}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <!-- Back to Menu button -->
+                            <div class="text-center mt-4">
+                                <a href="{% url 'home' %}" class="btn btn-outline-success rounded-pill px-4">
+                                    <i class="bi bi-arrow-left me-1"></i> Order More Food
+                                </a>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Polling Script -->
+            <script>
+                const orderId = {{ order.id }};
+                let pollCountdown = 8;
+
+                function updateCountdown() {
+                    const el = document.getElementById('countdownSec');
+                    if (el) el.textContent = pollCountdown;
+                    pollCountdown--;
+                    if (pollCountdown < 0) {
+                        pollCountdown = 8;
+                        fetchStatus();
+                    }
+                }
+
+                function fetchStatus() {
+                    fetch(`/api/order/${orderId}/status/`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.status) {
+                                const badge = document.getElementById('statusBadge');
+                                if (badge) {
+                                    badge.textContent = data.status;
+                                    badge.className = `badge ${data.status_badge_class} px-3 py-2 rounded-pill fs-6`;
+                                }
+
+                                const elapsed = document.getElementById('elapsedDisplay');
+                                if (elapsed) elapsed.textContent = `${data.elapsed_minutes} mins ago`;
+
+                                updateStepperUI(data.status_step, data.status);
+                            }
+                        })
+                        .catch(err => console.log('Status poll error', err));
+                }
+
+                function updateStepperUI(step, status) {
+                    const fill = document.getElementById('stepperFill');
+                    const widths = { 1: '0%', 2: '33%', 3: '66%', 4: '100%' };
+                    if (fill) fill.style.width = widths[step] || '0%';
+
+                    for (let s = 1; s <= 4; s++) {
+                        const stepEl = document.getElementById(`step_${s}`);
+                        if (!stepEl) continue;
+
+                        stepEl.classList.remove('completed', 'active');
+                        if (s < step) {
+                            stepEl.classList.add('completed');
+                        } else if (s === step) {
+                            stepEl.classList.add('active');
+                            if (s === 4) stepEl.classList.add('completed');
+                        }
+                    }
+                }
+
+                setInterval(updateCountdown, 1000);
+            </script>
+
+        {% else %}
+            <!-- No order entered yet -->
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8 col-lg-6 text-center py-5">
+                    <div class="card p-5 border-0 shadow-sm rounded-4">
+                        <div class="display-1 text-muted mb-3">📍</div>
+                        <h2 class="h4 fw-bold">Live Order Progress Tracking</h2>
+                        <p class="text-muted">Enter your Order ID in the search box above to track preparation status live from our kitchen.</p>
+                        <div class="d-flex justify-content-center gap-2 mt-2">
+                            <a href="{% url 'home' %}" class="btn btn-success rounded-pill px-4">
+                                Browse Food Menu
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer text-center mt-auto">
+        <div class="container">
+            <p class="small text-white-50 mb-0">© 2026 Smart Restaurant · Real-time Kitchen Operations</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,509 +1,376 @@
-```html
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Restaurant | Food Ordering</title>
+    <title>Smart Restaurant | Food Ordering &amp; Kitchen Dashboard</title>
+    <meta name="description" content="Order fresh, delicious gourmet food online with real-time kitchen tracking and easy table checkout.">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
-    <style>
-        :root {
-            --green: #198754;
-            --dark: #173c2b;
-            --cream: #fffaf1;
-        }
-
-        body {
-            background: var(--cream);
-            font-family: Arial, sans-serif;
-            color: #26332b;
-        }
-
-        .navbar {
-            background: var(--dark);
-        }
-
-        .navbar-brand {
-            color: white;
-            font-size: 25px;
-            font-weight: bold;
-        }
-
-        .hero {
-            background: linear-gradient(120deg, #173c2b, #248653);
-            color: white;
-            padding: 55px 20px;
-            text-align: center;
-        }
-
-        .hero h1 {
-            font-size: clamp(32px, 5vw, 48px);
-            font-weight: 800;
-        }
-
-        .section-title {
-            color: var(--dark);
-            font-weight: 800;
-        }
-
-        .food-card {
-            height: 100%;
-            background: white;
-            border: 0;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 4px 16px #0000000d;
-            transition: transform .2s, box-shadow .2s;
-        }
-
-        .food-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 9px 24px #00000016;
-        }
-
-        .food-image {
-            width: 100%;
-            height: 190px;
-            object-fit: cover;
-            background: #e8eee8;
-        }
-
-        .food-emoji {
-            height: 190px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 75px;
-            background: #edf5eb;
-        }
-
-        .food-name {
-            color: var(--dark);
-            font-weight: 750;
-        }
-
-        .food-price {
-            color: var(--green);
-            font-size: 21px;
-            font-weight: 800;
-        }
-
-        .btn-green {
-            background: var(--green);
-            color: white;
-            border: none;
-            border-radius: 9px;
-            font-weight: 700;
-        }
-
-        .btn-green:hover {
-            background: #146c43;
-            color: white;
-        }
-
-        .panel {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 18px #0000000d;
-        }
-
-        .cart-row {
-            border-bottom: 1px solid #e8ece8;
-            padding: 14px 0;
-        }
-
-        .quantity-btn {
-            border: 1px solid #d7e2d9;
-            background: #f4f8f4;
-            width: 32px;
-            height: 32px;
-            border-radius: 7px;
-            font-weight: bold;
-        }
-
-        .quantity-btn:hover {
-            background: #dcefe1;
-        }
-
-        .cart-total {
-            font-size: 20px;
-            font-weight: 800;
-            color: var(--dark);
-        }
-
-        .form-control, .form-select {
-            border-radius: 9px;
-            padding: 11px;
-        }
-
-        footer {
-            background: var(--dark);
-            color: white;
-            text-align: center;
-            padding: 24px 10px;
-            margin-top: 45px;
-        }
-    </style>
+    <!-- Custom Modern Styling -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
-
 <body>
 
-<nav class="navbar navbar-expand-lg">
-    <div class="container">
-        <a class="navbar-brand" href="{% url 'home' %}">🍽️ Smart Restaurant</a>
-        <span class="text-white">🛒 Cart: <b id="navCartCount">0</b></span>
-    </div>
-</nav>
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg smart-navbar py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
+                <span class="brand-badge">🍽️</span>
+                <span class="brand-title">Smart Restaurant</span>
+            </a>
 
-<section class="hero">
-    <div class="container">
-        <h1>Fresh Food. Great Taste. Happy Moments.</h1>
-        <p class="lead mt-3">
-            Order your favourites with just a click!
-        </p>
-        <a href="#menu" class="btn btn-light btn-lg mt-2">
-            Explore Menu
-        </a>
-    </div>
-</section>
+            <button class="navbar-toggler text-white border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navContent" aria-controls="navContent" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="bi bi-list fs-2 text-white"></i>
+            </button>
 
-<main class="container my-5">
-
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
-                 role="alert">
-                {{ message }}
-                <button type="button" class="btn-close"
-                        data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <section id="menu" class="mb-5">
-        <div class="text-center mb-4">
-            <h2 class="section-title">Our Menu 🍴</h2>
-            <p class="text-muted">Choose your favourite food!</p>
-        </div>
-
-        <div class="row g-4">
-            {% for item in items %}
-                <div class="col-12 col-sm-6 col-lg-3">
-                    <div class="food-card">
-
-                        {% if item.image_url %}
-                            <img src="{{ item.image_url }}"
-                                 class="food-image"
-                                 alt="{{ item.name }}"
-                                 loading="lazy">
-                        {% else %}
-                            {% if "burger" in item.name|lower %}
-                                <img src="{% static 'images/burger.jpg' %}"
-                                     class="food-image" alt="{{ item.name }}"
-                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🍔</div>'">
-                            {% elif "pizza" in item.name|lower %}
-                                <img src="{% static 'images/pizza.jpg' %}"
-                                     class="food-image" alt="{{ item.name }}"
-                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🍕</div>'">
-                            {% elif "biryani" in item.name|lower %}
-                                <img src="{% static 'images/biryani.jpg' %}"
-                                     class="food-image" alt="{{ item.name }}"
-                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🍛</div>'">
-                            {% elif "brownie" in item.name|lower %}
-                                <img src="{% static 'images/chocolate_brownie.jpg' %}"
-                                     class="food-image" alt="{{ item.name }}"
-                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🍫</div>'">
-                            {% elif "spring" in item.name|lower %}
-                                <img src="{% static 'images/veg_springrolls.jpg' %}"
-                                     class="food-image" alt="{{ item.name }}"
-                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🥟</div>'">
-                            {% elif "paneer" in item.name|lower %}
-                                <img src="{% static 'images/paneer.jpg' %}"
-                                     class="food-image" alt="{{ item.name }}"
-                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🍲</div>'">
-                            {% elif "chai" in item.name|lower %}
-                                <img src="{% static 'images/masala_chai.jpg' %}"
-                                     class="food-image" alt="{{ item.name }}"
-                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>☕</div>'">
-                            {% elif "lemon" in item.name|lower or "lime" in item.name|lower %}
-                                <img src="{% static 'images/lime_drink.jpg' %}"
-                                     class="food-image" alt="{{ item.name }}"
-                                     onerror="this.outerHTML='<div class=&quot;food-emoji&quot;>🥤</div>'">
-                            {% else %}
-                                <div class="food-emoji">🍽️</div>
-                            {% endif %}
-                        {% endif %}
-
-                        <div class="p-3">
-                            <div class="small text-muted mb-2">
-                                {{ item.category.name }}
-                                ·
-                                {% if item.is_vegetarian %}
-                                    🟢 Veg
-                                {% else %}
-                                    🔴 Non-Veg
-                                {% endif %}
-                            </div>
-
-                            <h5 class="food-name">{{ item.name }}</h5>
-                            <p class="text-muted small">
-                                {{ item.description|default:"Freshly prepared and delicious." }}
-                            </p>
-
-                            <div class="d-flex justify-content-between
-                                        align-items-center gap-2 mt-3">
-                                <span class="food-price">
-                                    ₹{{ item.price|floatformat:2 }}
-                                </span>
-
-                                <button type="button"
-                                        class="btn btn-green"
-                                        onclick="addToCart(
-                                            {{ item.id }},
-                                            '{{ item.name|escapejs }}',
-                                            {{ item.price }}
-                                        )">
-                                    + Add
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% empty %}
-                <div class="col-12 text-center">
-                    <div class="alert alert-warning">
-                        No menu items available. Please add items in Django Admin.
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section id="cart" class="row g-4">
-
-        <div class="col-12 col-lg-7">
-            <div class="panel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="section-title mb-0">🛒 Your Cart</h3>
-                    <button type="button" class="btn btn-outline-danger btn-sm"
-                            onclick="clearCart()">Clear Cart</button>
-                </div>
-
-                <div id="cartItems">
-                    <p class="text-muted">Your cart is empty. Add food from the menu.</p>
-                </div>
-
-                <div class="border-top pt-3 mt-3">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Subtotal</span>
-                        <span id="subtotal">₹0.00</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Tax (5%)</span>
-                        <span id="tax">₹0.00</span>
-                    </div>
-                    <div class="d-flex justify-content-between cart-total">
-                        <span>Grand Total</span>
-                        <span id="grandTotal">₹0.00</span>
-                    </div>
-                </div>
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-2 my-2 my-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'home' %}"><i class="bi bi-house-door me-1"></i> Menu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'track_order' %}"><i class="bi bi-geo-alt me-1"></i> Track Order</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'kitchen_dashboard' %}"><i class="bi bi-speedometer2 me-1"></i> Kitchen Dashboard</a>
+                    </li>
+                    <li class="nav-item ms-lg-2">
+                        <a href="#cartSection" class="nav-cart-btn text-decoration-none">
+                            <i class="bi bi-bag-check-fill fs-5"></i>
+                            <span>Cart</span>
+                            <span class="cart-counter-badge" style="display: none;">0</span>
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
+    </nav>
 
-        <div class="col-12 col-lg-5">
-            <div class="panel">
-                <h3 class="section-title mb-3">👤 Customer Details</h3>
-
-                <form method="POST" action="{% url 'place_order' %}" id="orderForm">
-                    {% csrf_token %}
-
-                    <div class="mb-3">
-                        <label for="customer_name" class="form-label">Full Name *</label>
-                        <input type="text" class="form-control"
-                               id="customer_name" name="customer_name"
-                               placeholder="Enter your name" maxlength="100" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="customer_phone" class="form-label">Phone Number *</label>
-                        <input type="tel" class="form-control"
-                               id="customer_phone" name="customer_phone"
-                               placeholder="Enter phone number"
-                               pattern="[0-9+\-\s]{10,15}"
-                               title="Enter a valid phone number"
-                               maxlength="15" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="table_number" class="form-label">Table Number</label>
-                        <input type="text" class="form-control"
-                               id="table_number" name="table_number"
-                               placeholder="Optional" maxlength="20">
-                    </div>
-
-                    <input type="hidden" name="cart" id="cartData">
-
-                    <button type="submit" class="btn btn-green btn-lg w-100"
-                            id="placeOrderButton">
-                        Place Order
-                    </button>
-
-                    <p class="small text-muted mt-3 mb-0">
-                        Your order will be saved when the server accepts it.
+    <!-- Hero Section -->
+    <header class="hero-section text-center text-lg-start">
+        <div class="container position-relative">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <span class="hero-pill"><i class="bi bi-stars"></i> Gourmet Dining &amp; Express Kitchen</span>
+                    <h1 class="hero-title">Fresh Food. Great Taste.<br><span style="color: #fef08a;">Happy Moments.</span></h1>
+                    <p class="hero-subtitle">
+                        Explore our handcrafted menu prepared by master chefs using organic, locally sourced farm ingredients. Order online for table delivery or takeaway.
                     </p>
-                </form>
+                    <div class="d-flex flex-wrap gap-3 mt-4 justify-content-center justify-content-lg-start">
+                        <a href="#menuGrid" class="btn btn-warning btn-lg px-4 py-2 fw-bold text-dark rounded-pill shadow">
+                            <i class="bi bi-card-list me-1"></i> Explore Menu
+                        </a>
+                        <a href="{% url 'track_order' %}" class="btn btn-outline-light btn-lg px-4 py-2 rounded-pill">
+                            <i class="bi bi-search me-1"></i> Track My Order
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-5 d-none d-lg-block text-center">
+                    <div class="position-relative d-inline-block">
+                        <img src="{% static 'images/burger.jpg' %}" alt="Signature Dish" class="rounded-circle shadow-lg border border-4 border-white" style="width: 320px; height: 320px; object-fit: cover;">
+                        <span class="position-absolute bottom-0 start-0 bg-white text-dark py-2 px-3 rounded-pill shadow fw-bold small">
+                            ⭐ 4.9 Chef's Recommended
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
+    </header>
 
-    </section>
-</main>
+    <!-- Main Content Container -->
+    <main class="container my-5">
 
-<footer>
-    <h5>🍽️ Smart Restaurant</h5>
-    <p class="mb-0">Food Ordering &amp; Kitchen Dashboard</p>
-    <small>Fresh food, happy moments.</small>
-</footer>
+        <!-- Django System Flash Messages -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show rounded-4 shadow-sm" role="alert">
+                        {% if message.tags == 'error' %}
+                            <i class="bi bi-exclamation-octagon-fill me-2 fs-5"></i>
+                        {% elif message.tags == 'success' %}
+                            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+                        {% else %}
+                            <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                        {% endif %}
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
-<script>
-    // Use a single cart object keyed by menu item ID.
-    // This prevents the same menu item appearing twice.
-    let cart = {};
+        <!-- Filter & Search Toolbar -->
+        <section class="filter-bar mb-5">
+            <div class="row g-3 align-items-center">
+                <!-- Search input -->
+                <div class="col-12 col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 rounded-start-pill"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" id="menuSearchInput" class="form-control bg-light border-start-0 rounded-end-pill" placeholder="Search dishes (e.g. Biryani, Burger)...">
+                    </div>
+                </div>
 
-    function money(amount) {
-        return "₹" + Number(amount).toFixed(2);
-    }
+                <!-- Category Pills -->
+                <div class="col-12 col-md-6">
+                    <div class="category-pills-wrapper">
+                        <button type="button" class="cat-filter-btn active" data-category="all" onclick="setCategory('all', this)">
+                            <i class="bi bi-grid-fill"></i> All Items
+                        </button>
+                        <button type="button" class="cat-filter-btn" data-category="Appetizers" onclick="setCategory('Appetizers', this)">
+                            🥟 Appetizers
+                        </button>
+                        <button type="button" class="cat-filter-btn" data-category="Main Course" onclick="setCategory('Main Course', this)">
+                            🍛 Main Course
+                        </button>
+                        <button type="button" class="cat-filter-btn" data-category="Desserts" onclick="setCategory('Desserts', this)">
+                            🍰 Desserts
+                        </button>
+                        <button type="button" class="cat-filter-btn" data-category="Beverages" onclick="setCategory('Beverages', this)">
+                            🥤 Beverages
+                        </button>
+                    </div>
+                </div>
 
-    function addToCart(id, name, price) {
-        const key = String(id);
+                <!-- Pure Veg Toggle -->
+                <div class="col-12 col-md-2 text-md-end">
+                    <button type="button" id="dietFilterVeg" class="diet-toggle-btn w-100" onclick="toggleVegOnly(this)">
+                        🟢 Pure Veg
+                    </button>
+                </div>
+            </div>
+        </section>
 
-        if (cart[key]) {
-            cart[key].quantity += 1;
-        } else {
-            cart[key] = {
-                id: Number(id),
-                name: String(name),
-                price: Number(price),
-                quantity: 1
-            };
-        }
+        <!-- Menu & Cart Layout -->
+        <div class="row g-4" id="menuGrid">
 
-        renderCart();
-    }
+            <!-- Left: Food Menu Grid -->
+            <div class="col-12 col-lg-8">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="h3 fw-bold text-dark mb-0">Our Food Menu</h2>
+                        <p class="text-muted small mb-0">Select your favourite culinary delights to add to cart</p>
+                    </div>
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
+                        {{ items|length }} Delicious Items
+                    </span>
+                </div>
 
-    function changeQuantity(id, change) {
-        const key = String(id);
+                <!-- Items Row -->
+                <div class="row g-4">
+                    {% for item in items %}
+                        <div class="col-12 col-sm-6 food-item-col"
+                             data-category="{{ item.category.name }}"
+                             data-name="{{ item.name }}"
+                             data-desc="{{ item.description }}"
+                             data-veg="{{ item.is_vegetarian|lower }}">
 
-        if (!cart[key]) return;
+                            <div class="food-card">
+                                <!-- Image & Tags -->
+                                <div class="food-img-container">
+                                    {% if item.image_url %}
+                                        <img src="{{ item.image_url }}" class="food-img" alt="{{ item.name }}" loading="lazy">
+                                    {% elif item.static_image_name %}
+                                        <img src="{% static item.static_image_name %}" class="food-img" alt="{{ item.name }}" loading="lazy">
+                                    {% else %}
+                                        <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-light fs-1">
+                                            🍽️
+                                        </div>
+                                    {% endif %}
 
-        cart[key].quantity += change;
+                                    <!-- Category badge -->
+                                    <span class="category-tag">{{ item.category.name }}</span>
 
-        if (cart[key].quantity <= 0) {
-            delete cart[key];
-        }
+                                    <!-- Veg / Non-Veg badge -->
+                                    {% if item.is_vegetarian %}
+                                        <div class="diet-badge veg" title="Vegetarian"></div>
+                                    {% else %}
+                                        <div class="diet-badge non-veg" title="Non-Vegetarian"></div>
+                                    {% endif %}
+                                </div>
 
-        renderCart();
-    }
+                                <!-- Card Body -->
+                                <div class="food-card-body">
+                                    <h3 class="food-card-title">{{ item.name }}</h3>
+                                    <p class="food-card-desc">{{ item.description|default:"Prepared fresh with secret restaurant recipe and authentic spices." }}</p>
 
-    function clearCart() {
-        cart = {};
-        renderCart();
-    }
-
-    function renderCart() {
-        const cartItems = document.getElementById("cartItems");
-        const entries = Object.values(cart);
-        let totalQuantity = 0;
-        let subtotal = 0;
-
-        if (entries.length === 0) {
-            cartItems.innerHTML =
-                '<p class="text-muted">Your cart is empty. Add food from the menu.</p>';
-        } else {
-            cartItems.innerHTML = entries.map(item => {
-                totalQuantity += item.quantity;
-                subtotal += item.price * item.quantity;
-
-                return `
-                    <div class="cart-row d-flex justify-content-between
-                                align-items-center gap-2">
-                        <div>
-                            <strong>${escapeHTML(item.name)}</strong>
-                            <div class="small text-muted">
-                                ${money(item.price)} each
+                                    <!-- Footer with Price & Add Button -->
+                                    <div class="food-card-footer">
+                                        <div>
+                                            <span class="price-currency">₹</span><span class="price-text">{{ item.price|floatformat:2 }}</span>
+                                        </div>
+                                        <button type="button"
+                                                id="addBtn_{{ item.id }}"
+                                                class="btn-add-food"
+                                                onclick="addToCart({{ item.id }}, '{{ item.name|escapejs }}', {{ item.price }}, {{ item.is_vegetarian|lower }})">
+                                            <i class="bi bi-plus-lg"></i> Add
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="fw-bold mt-1">
-                                ${money(item.price * item.quantity)}
+
+                        </div>
+                    {% empty %}
+                        <div class="col-12 text-center py-5">
+                            <div class="alert alert-warning rounded-4 p-4">
+                                <h5>No items found in menu</h5>
+                                <p class="mb-0">Please use Django Admin or seed data to add food items.</p>
                             </div>
                         </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <button type="button" class="quantity-btn"
-                                aria-label="Decrease quantity"
-                                onclick="changeQuantity(${item.id}, -1)">−</button>
-                            <span class="fw-bold">${item.quantity}</span>
-                            <button type="button" class="quantity-btn"
-                                aria-label="Increase quantity"
-                                onclick="changeQuantity(${item.id}, 1)">+</button>
+                    {% endfor %}
+                </div>
+
+                <!-- No Results fallback for search/filter -->
+                <div id="noMenuResults" class="text-center py-5" style="display: none;">
+                    <div class="card p-5 border-0 shadow-sm rounded-4 text-center">
+                        <i class="bi bi-search fs-1 text-muted mb-3"></i>
+                        <h4 class="fw-bold">No Matching Dishes Found</h4>
+                        <p class="text-muted mb-3">We couldn't find any dishes matching your current filter criteria.</p>
+                        <div>
+                            <button type="button" class="btn btn-outline-success rounded-pill px-4" onclick="document.getElementById('menuSearchInput').value=''; setCategory('all'); if(document.getElementById('dietFilterVeg').classList.contains('active')) toggleVegOnly(document.getElementById('dietFilterVeg'));">
+                                Reset Filters
+                            </button>
                         </div>
                     </div>
-                `;
-            }).join("");
-        }
+                </div>
 
-        const tax = Math.round(subtotal * 5) / 100;
-        const grandTotal = subtotal + tax;
+            </div>
 
-        document.getElementById("subtotal").textContent = money(subtotal);
-        document.getElementById("tax").textContent = money(tax);
-        document.getElementById("grandTotal").textContent = money(grandTotal);
-        document.getElementById("navCartCount").textContent = totalQuantity;
+            <!-- Right: Dynamic Shopping Cart & Checkout Panel -->
+            <div class="col-12 col-lg-4" id="cartSection">
+                <div class="cart-panel">
+                    <div class="d-flex justify-content-between align-items-center pb-3 border-bottom">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fs-4">🛒</span>
+                            <h3 class="h5 fw-bold mb-0">Your Order Cart</h3>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" onclick="clearCart()">
+                            <i class="bi bi-trash3"></i> Clear
+                        </button>
+                    </div>
 
-        // Send only item IDs and quantities. The server checks prices.
-        document.getElementById("cartData").value = JSON.stringify(
-            entries.map(item => ({
-                id: item.id,
-                quantity: item.quantity
-            }))
-        );
-    }
+                    <!-- Cart Items container -->
+                    <div id="cartItemsList" class="my-2" style="max-height: 280px; overflow-y: auto;">
+                        <!-- Injected via JavaScript -->
+                    </div>
 
-    function escapeHTML(value) {
-        return String(value).replace(/[&<>"']/g, char => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#039;"
-        })[char]);
-    }
+                    <!-- Empty State Placeholder -->
+                    <div id="cartEmptyState" class="text-center py-5">
+                        <div class="text-muted mb-2">
+                            <i class="bi bi-basket3 fs-1 text-secondary"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark">Your cart is empty</h5>
+                        <p class="text-muted small mb-0">Browse our menu and click <strong>+ Add</strong> to choose your food.</p>
+                    </div>
 
-    document.getElementById("orderForm").addEventListener("submit", function(event) {
-        const entries = Object.values(cart);
+                    <!-- Bill Breakdown -->
+                    <div id="cartSummaryBox" style="display: none;">
+                        <div class="bg-light p-3 rounded-3 my-3">
+                            <div class="bill-breakdown-row">
+                                <span>Subtotal</span>
+                                <span id="cartSubtotal" class="fw-semibold">₹0.00</span>
+                            </div>
+                            <div class="bill-breakdown-row">
+                                <span>GST &amp; Restaurant Tax (5%)</span>
+                                <span id="cartTax" class="fw-semibold">₹0.00</span>
+                            </div>
+                            <div class="bill-breakdown-row text-success">
+                                <span>Table Service</span>
+                                <span class="fw-semibold">FREE</span>
+                            </div>
+                            <div class="bill-grand-total">
+                                <span>Grand Total</span>
+                                <span id="cartGrandTotal" class="text-success">₹0.00</span>
+                            </div>
+                        </div>
 
-        if (entries.length === 0) {
-            event.preventDefault();
-            alert("Please add at least one food item to your cart.");
-            return;
-        }
+                        <!-- Checkout Details Form -->
+                        <div class="pt-2">
+                            <h4 class="h6 fw-bold text-dark mb-3">👤 Customer &amp; Table Details</h4>
 
-        document.getElementById("cartData").value = JSON.stringify(
-            entries.map(item => ({
-                id: item.id,
-                quantity: item.quantity
-            }))
-        );
+                            <form method="POST" action="{% url 'place_order' %}" id="orderForm">
+                                {% csrf_token %}
 
-        document.getElementById("placeOrderButton").disabled = true;
-        document.getElementById("placeOrderButton").textContent = "Placing Order...";
-    });
+                                <div class="mb-3">
+                                    <label for="customer_name" class="form-label small fw-semibold text-secondary">Full Name *</label>
+                                    {{ form.customer_name }}
+                                </div>
 
-    renderCart();
-</script>
+                                <div class="mb-3">
+                                    <label for="customer_phone" class="form-label small fw-semibold text-secondary">Mobile Number (10 Digits) *</label>
+                                    {{ form.customer_phone }}
+                                </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+                                <div class="mb-3">
+                                    <label for="table_number" class="form-label small fw-semibold text-secondary">Table Number / Takeaway</label>
+                                    {{ form.table_number }}
+                                </div>
+
+                                <!-- Hidden payload for cart serialization -->
+                                <input type="hidden" name="cart" id="cartData">
+
+                                <button type="submit" class="btn-checkout mt-2" id="placeOrderButton">
+                                    <i class="bi bi-shield-check me-1"></i> Place Order Now
+                                </button>
+
+                                <div class="text-center mt-3">
+                                    <small class="text-muted d-block">
+                                        <i class="bi bi-lock-fill me-1"></i> Secure checkout with instant kitchen dispatch
+                                    </small>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Mobile Bottom Cart Bar (Sticky) -->
+    <div class="d-lg-none fixed-bottom bg-white border-top shadow-lg p-3" style="z-index: 1020;">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div>
+                <span class="badge bg-success rounded-pill me-1"><span id="mobileCartCount">0</span> items</span>
+                <span class="fw-bold fs-5 text-dark" id="mobileCartTotal">₹0.00</span>
+            </div>
+            <a href="#cartSection" class="btn btn-success fw-bold rounded-pill px-4">
+                View Cart &amp; Order <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container" id="toastWrapper"></div>
+
+    <!-- Footer -->
+    <footer class="app-footer text-center">
+        <div class="container">
+            <h5 class="text-white fw-bold mb-2">🍽️ Smart Restaurant</h5>
+            <p class="small text-white-50 mb-3">
+                Full-Stack Restaurant Food Ordering Portal &amp; Kitchen Display System.<br>
+                Powered by Python, Django, SQLite &amp; Bootstrap 5.
+            </p>
+            <div class="d-flex justify-content-center gap-4 small mb-3">
+                <a href="{% url 'home' %}">Menu</a>
+                <a href="{% url 'track_order' %}">Track Order</a>
+                <a href="{% url 'kitchen_dashboard' %}">Kitchen Dashboard</a>
+                <a href="/admin/">Staff Admin</a>
+            </div>
+            <p class="small text-muted mb-0">© 2026 Smart Restaurant. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Dynamic Cart & Filtering JS -->
+    <script src="{% static 'js/cart.js' %}"></script>
 </body>
 </html>

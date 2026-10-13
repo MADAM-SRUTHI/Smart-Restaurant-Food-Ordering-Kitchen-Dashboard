@@ -1,10 +1,14 @@
-
 from django.db import models
+from django.utils import timezone
 
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     icon = models.CharField(max_length=50, blank=True)
+
+    class Meta:
+        verbose_name_plural = "Categories"
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -23,8 +27,33 @@ class MenuItem(models.Model):
     is_available = models.BooleanField(default=True)
     image_url = models.URLField(blank=True)
 
+    class Meta:
+        ordering = ["category__name", "name"]
+
     def __str__(self):
         return self.name
+
+    @property
+    def static_image_name(self):
+        """Map item to known static images if image_url is not set."""
+        name_l = self.name.lower()
+        if "spring" in name_l or "roll" in name_l:
+            return "images/spring_rolls.jpg"
+        if "burger" in name_l:
+            return "images/burger.jpg"
+        if "pizza" in name_l:
+            return "images/pizza.jpg"
+        if "biryani" in name_l:
+            return "images/biryani.jpg"
+        if "brownie" in name_l:
+            return "images/chocolate_brownie.jpg"
+        if "paneer" in name_l or "panner" in name_l:
+            return "images/paneer.jpg"
+        if "chai" in name_l or "tea" in name_l:
+            return "images/masala_chai.jpg"
+        if "lime" in name_l or "lemon" in name_l or "soda" in name_l:
+            return "images/lime_soda.jpg"
+        return ""
 
 
 class Order(models.Model):
@@ -46,8 +75,36 @@ class Order(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["-created_at"]
+
     def __str__(self):
         return f"Order #{self.pk} - {self.customer_name}"
+
+    @property
+    def status_step(self):
+        mapping = {
+            "Received": 1,
+            "Preparing": 2,
+            "Ready": 3,
+            "Completed": 4,
+        }
+        return mapping.get(self.status, 1)
+
+    @property
+    def status_badge_class(self):
+        mapping = {
+            "Received": "bg-primary",
+            "Preparing": "bg-warning text-dark",
+            "Ready": "bg-info text-dark",
+            "Completed": "bg-success",
+        }
+        return mapping.get(self.status, "bg-secondary")
+
+    @property
+    def elapsed_minutes(self):
+        delta = timezone.now() - self.created_at
+        return max(0, int(delta.total_seconds() // 60))
 
 
 class OrderItem(models.Model):
@@ -65,3 +122,7 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.menu_item.name} x {self.quantity}"
+
+    @property
+    def subtotal(self):
+        return self.quantity * self.price
